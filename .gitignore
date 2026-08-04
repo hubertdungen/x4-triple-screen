@@ -1,0 +1,11 @@
+/release/
+/third_party/minhook-v1.3.4.zip
+/third_party/minhook-1.3.4/.github/
+/third_party/minhook-1.3.4/build/
+/third_party/minhook-1.3.4/cmake/
+/third_party/minhook-1.3.4/dll_resources/
+/third_party/minhook-1.3.4/.editorconfig
+/third_party/minhook-1.3.4/.gitignore
+/third_party/minhook-1.3.4/CMakeLists.txt
+*.user
+*.suo
