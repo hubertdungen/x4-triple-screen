@@ -6,7 +6,7 @@ X4 normally pulls an oversized window back to one monitor. X4 Triple Screen star
 
 ## Download
 
-[Download the latest portable ZIP](https://github.com/hubertdungen/x4-triple-screen/releases/latest/download/X4TripleScreen-v0.1.0-alpha.zip), extract it, close X4, and double-click `X4TripleScreen.exe`. All releases and their notes are available on the [GitHub Releases page](https://github.com/hubertdungen/x4-triple-screen/releases).
+[Download X4 Triple Screen v0.1.0-alpha](https://github.com/hubertdungen/x4-triple-screen/releases/download/v0.1.0-alpha/X4TripleScreen-v0.1.0-alpha.zip), extract it, close X4, and double-click `X4TripleScreen.exe`. All releases and their notes are available on the [GitHub Releases page](https://github.com/hubertdungen/x4-triple-screen/releases).
 
 No installation, NVIDIA Surround, service, driver, or permanent modification to `X4.exe` is required.
 

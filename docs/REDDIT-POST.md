@@ -12,7 +12,7 @@ I wanted to run X4 across three independent monitors: a native 2560x1440 centre 
 
 After a lot of testing, we found that X4 accepts the wide resolution in `config.xml` but constrains its real window during startup. I have therefore made **X4 Triple Screen**, a small open-source Windows launcher and X4-specific window hook.
 
-**Download:** https://github.com/hubertdungen/x4-triple-screen/releases/latest
+**Download:** https://github.com/hubertdungen/x4-triple-screen/releases/tag/v0.1.0-alpha
 
 **Source, documentation, and checksums:** https://github.com/hubertdungen/x4-triple-screen
 
