@@ -1,8 +1,8 @@
 #include <windows.h>
 
 1 VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,2,0,0
+ PRODUCTVERSION 0,2,0,0
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
  FILEFLAGS VS_FF_PRERELEASE
  FILEOS VOS_NT_WINDOWS32
@@ -15,12 +15,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "X4 Triple Screen contributors\0"
             VALUE "FileDescription", "X4 Triple Screen launcher\0"
-            VALUE "FileVersion", "0.1.0-alpha\0"
+            VALUE "FileVersion", "0.2.0-beta\0"
             VALUE "InternalName", "X4TripleScreen.exe\0"
             VALUE "LegalCopyright", "MIT License\0"
             VALUE "OriginalFilename", "X4TripleScreen.exe\0"
             VALUE "ProductName", "X4 Triple Screen\0"
-            VALUE "ProductVersion", "0.1.0-alpha\0"
+            VALUE "ProductVersion", "0.2.0-beta\0"
         END
     END
     BLOCK "VarFileInfo"

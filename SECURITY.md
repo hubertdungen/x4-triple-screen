@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Only the latest published release is supported. This project is experimental alpha software.
+Only the latest published release is supported. This project is currently beta software.
 
 ## Reporting a vulnerability
 

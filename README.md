@@ -6,7 +6,7 @@ X4 normally pulls an oversized window back to one monitor. X4 Triple Screen star
 
 ## Download
 
-[Download X4 Triple Screen v0.1.0-alpha](https://github.com/hubertdungen/x4-triple-screen/releases/download/v0.1.0-alpha/X4TripleScreen-v0.1.0-alpha.zip), extract it, close X4, and double-click `X4TripleScreen.exe`. All releases and their notes are available on the [GitHub Releases page](https://github.com/hubertdungen/x4-triple-screen/releases).
+[Download the newest X4 Triple Screen build](https://github.com/hubertdungen/x4-triple-screen/releases), extract it, close X4, and double-click `X4TripleScreen.exe`. Release notes and SHA-256 checksums are published beside every download.
 
 No installation, NVIDIA Surround, service, driver, or permanent modification to `X4.exe` is required.
 
@@ -58,11 +58,13 @@ It does **not** patch `X4.exe`, install a service or driver, enable Surround, or
 
 By default the X4 configuration remains writable. To deliberately make it read-only, set `lock_x4_config=1`; X4 will then be unable to save other settings until the attribute is removed.
 
-Restore the backed-up X4 display configuration with:
+Restore the backed-up X4 display settings with:
 
 ```text
 X4TripleScreen.exe --restore-config
 ```
+
+The restore command preserves unrelated current X4 settings and clears the read-only attribute if `lock_x4_config=1` had enabled it.
 
 Deleting the extracted folder removes the tool itself.
 
@@ -106,6 +108,8 @@ PowerShell users can alternatively run:
 ```
 
 Artifacts are written to `release/`. See [How it works](docs/HOW-IT-WORKS.md) for the implementation and threat boundary.
+
+Run the built-in checks with `X4TripleScreen.exe --self-test`. Release packaging and clean Windows builds are also exercised by GitHub Actions.
 
 ## License and credits
 
