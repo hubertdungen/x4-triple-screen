@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0-beta - 2026-08-05
+
+- Validate the full executable path before injecting into an existing or Steam replacement `X4.exe` process.
+- Refuse ambiguous multiple matching X4 processes.
+- Restore only the backed-up display values, preserving unrelated current X4 settings.
+- Clear the read-only attribute when restoring a configuration locked by the launcher.
+- Write X4 configuration changes atomically.
+- Add built-in self-tests, release-package checks, and a pinned clean Windows CI build.
+- Use a stable GitHub Releases link in public documentation.
+
 ## 0.1.0-alpha - 2026-08-04
 
 - Initial X4-specific launcher and window hook.

@@ -12,7 +12,7 @@ Changing `config.xml` to an oversized window is not sufficient. X4 accepts the s
 2. Finds Steam and X4 from the Steam registry and library manifests, unless explicit paths are configured.
 3. Backs up and prepares X4's `config.xml` for windowed rendering.
 4. Starts X4 suspended and loads the hook before normal window creation.
-5. Detects Steam's replacement X4 process and loads the hook there as well.
+5. Detects Steam's replacement X4 process, verifies its full executable path, and loads the hook there as well.
 
 If X4 is already running, the launcher can attach to that process directly.
 
@@ -39,6 +39,6 @@ The game renderer remains X4's Vulkan renderer. The tool does not intercept Vulk
 
 ## Files touched
 
-The only user file modified is the active X4 `config.xml`. Its first-run backup is named `config.x4-triple-screen.backup.xml` in the same folder. The launcher can restore that backup with `--restore-config`.
+The only user file modified is the active X4 `config.xml`. Its first-run backup is named `config.x4-triple-screen.backup.xml` in the same folder. The launcher writes configuration changes atomically. `--restore-config` restores only the four backed-up display values, keeps unrelated current X4 settings, and clears a read-only lock applied by the launcher.
 
 The tool also creates `X4TripleScreen.log` in its own folder.

@@ -1,0 +1,46 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Download pinned Zig 0.16.0
+        shell: pwsh
+        run: |
+          $url = "https://ziglang.org/download/0.16.0/zig-x86_64-windows-0.16.0.zip"
+          $archive = Join-Path $env:RUNNER_TEMP "zig-0.16.0.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()
+          $expected = "68659eb5f1e4eb1437a722f1dd889c5a322c9954607f5edcf337bc3684a75a7e"
+          if ($actual -ne $expected) { throw "Zig archive checksum mismatch." }
+          Expand-Archive -LiteralPath $archive -DestinationPath $env:RUNNER_TEMP
+          "ZIG_EXE=$env:RUNNER_TEMP\zig-x86_64-windows-0.16.0\zig.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build and package beta
+        shell: pwsh
+        run: .\package.ps1 -Zig $env:ZIG_EXE -Version 0.2.0-beta
+
+      - name: Run release smoke tests
+        shell: pwsh
+        run: .\tests\release-smoke.ps1 -ReleaseDirectory .\release -Version 0.2.0-beta -PackageZip .\release\X4TripleScreen-v0.2.0-beta.zip
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: X4TripleScreen-v0.2.0-beta
+          path: |
+            release/X4TripleScreen-v0.2.0-beta.zip
+            release/X4TripleScreen-v0.2.0-beta.zip.sha256
+          if-no-files-found: error

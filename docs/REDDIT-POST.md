@@ -12,7 +12,7 @@ I wanted to run X4 across three independent monitors: a native 2560x1440 centre 
 
 After a lot of testing, we found that X4 accepts the wide resolution in `config.xml` but constrains its real window during startup. I have therefore made **X4 Triple Screen**, a small open-source Windows launcher and X4-specific window hook.
 
-**Download:** https://github.com/hubertdungen/x4-triple-screen/releases/tag/v0.1.0-alpha
+**Download:** https://github.com/hubertdungen/x4-triple-screen/releases
 
 **Source, documentation, and checksums:** https://github.com/hubertdungen/x4-triple-screen
 
@@ -50,8 +50,8 @@ This is one very wide X4/Vulkan surface, not three separately projected cameras.
 - The cockpit/world view is wonderfully immersive, but the far sides can be geometrically stretched.
 - Menus, HUD elements, and the map span the full width. Some are awkward and the map can be genuinely unpleasant to use.
 - 7680x1440 is about 11.1 million pixels per frame, so expect a meaningful performance cost.
-- The first alpha binaries are unsigned. Windows/antivirus may warn because this tool injects its own DLL into X4. Please do not disable security software; the full source and build instructions are available for review.
+- The binaries are unsigned. Windows/antivirus may warn because this tool injects its own DLL into X4. Please do not disable security software; the full source and build instructions are available for review.
 
 For me, the immersion is worth the UI trade-off. If you already have a mixed-resolution three-monitor desk, why leave the side displays unused?
 
-This is an experimental alpha and currently targets the Steam/Windows version. Tested layouts, bug reports, and code review are very welcome. Please include your physical/effective monitor resolutions and the log when reporting a problem.
+This is currently a public beta and targets the Steam/Windows version. Tested layouts, bug reports, and code review are very welcome. Please include your physical/effective monitor resolutions and the log when reporting a problem.

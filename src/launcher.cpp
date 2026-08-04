@@ -4,6 +4,7 @@
 #include <tlhelp32.h>
 
 #include <algorithm>
+#include <cwctype>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -106,22 +107,68 @@ fs::path X4FromSteam(const fs::path& steam_exe) {
   return {};
 }
 
-DWORD FindProcess(const wchar_t* name, DWORD excluded_pid = 0) {
+std::vector<DWORD> FindProcesses(const wchar_t* name, DWORD excluded_pid = 0) {
   PROCESSENTRY32W entry{};
   entry.dwSize = sizeof(entry);
   HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (snapshot == INVALID_HANDLE_VALUE) return 0;
-  DWORD pid = 0;
+  if (snapshot == INVALID_HANDLE_VALUE) return {};
+  std::vector<DWORD> pids;
   if (Process32FirstW(snapshot, &entry)) {
     do {
       if (_wcsicmp(entry.szExeFile, name) == 0 && entry.th32ProcessID != excluded_pid) {
-        pid = entry.th32ProcessID;
-        break;
+        pids.push_back(entry.th32ProcessID);
       }
     } while (Process32NextW(snapshot, &entry));
   }
   CloseHandle(snapshot);
-  return pid;
+  return pids;
+}
+
+DWORD FindProcess(const wchar_t* name, DWORD excluded_pid = 0) {
+  const std::vector<DWORD> pids = FindProcesses(name, excluded_pid);
+  return pids.empty() ? 0 : pids.front();
+}
+
+std::optional<fs::path> ProcessExecutablePath(DWORD pid) {
+  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+  if (!process) return std::nullopt;
+  std::vector<wchar_t> path(32768);
+  DWORD size = static_cast<DWORD>(path.size());
+  const BOOL ok = QueryFullProcessImageNameW(process, 0, path.data(), &size);
+  CloseHandle(process);
+  if (!ok || size == 0) return std::nullopt;
+  return fs::path(std::wstring(path.data(), size));
+}
+
+std::wstring NormalizedPath(const fs::path& path) {
+  std::error_code ec;
+  fs::path normalized = fs::weakly_canonical(path, ec);
+  if (ec) normalized = fs::absolute(path, ec).lexically_normal();
+  std::wstring value = normalized.wstring();
+  std::transform(value.begin(), value.end(), value.begin(),
+                 [](wchar_t ch) { return static_cast<wchar_t>(std::towlower(ch)); });
+  return value;
+}
+
+bool ProcessMatchesExecutable(DWORD pid, const fs::path& expected) {
+  const auto actual = ProcessExecutablePath(pid);
+  if (!actual) return false;
+  std::error_code ec;
+  if (fs::equivalent(*actual, expected, ec) && !ec) return true;
+  return NormalizedPath(*actual) == NormalizedPath(expected);
+}
+
+DWORD FindExpectedProcess(const wchar_t* name, const fs::path& expected, DWORD excluded_pid,
+                          bool* ambiguous) {
+  DWORD match = 0;
+  int matches = 0;
+  for (DWORD pid : FindProcesses(name, excluded_pid)) {
+    if (!ProcessMatchesExecutable(pid, expected)) continue;
+    match = pid;
+    ++matches;
+  }
+  if (ambiguous) *ambiguous = matches > 1;
+  return matches == 1 ? match : 0;
 }
 
 bool StartSteam(const Settings& settings) {
@@ -173,6 +220,41 @@ std::string ReadText(const fs::path& path) {
   return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
+bool WriteTextAtomically(const fs::path& path, const std::string& text) {
+  fs::path temporary = path;
+  temporary += L".x4ts.tmp";
+  {
+    std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
+    if (!file) return false;
+    file.write(text.data(), static_cast<std::streamsize>(text.size()));
+    file.flush();
+    if (!file) {
+      std::error_code ignored;
+      fs::remove(temporary, ignored);
+      return false;
+    }
+  }
+  SetFileAttributesW(temporary.c_str(), FILE_ATTRIBUTE_NORMAL);
+  if (!MoveFileExW(temporary.c_str(), path.c_str(),
+                   MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    std::error_code ignored;
+    fs::remove(temporary, ignored);
+    return false;
+  }
+  return true;
+}
+
+std::optional<std::string> XmlValue(const std::string& text, const std::string& key) {
+  const std::string open = "<" + key + ">";
+  const std::string close = "</" + key + ">";
+  const size_t begin = text.find(open);
+  if (begin == std::string::npos) return std::nullopt;
+  const size_t value_begin = begin + open.size();
+  const size_t end = text.find(close, value_begin);
+  if (end == std::string::npos) return std::nullopt;
+  return text.substr(value_begin, end - value_begin);
+}
+
 bool ReplaceXmlValue(std::string& text, const std::string& key, const std::string& value) {
   const std::string open = "<" + key + ">";
   const std::string close = "</" + key + ">";
@@ -182,6 +264,14 @@ bool ReplaceXmlValue(std::string& text, const std::string& key, const std::strin
   const size_t end = text.find(close, value_begin);
   if (end == std::string::npos) return false;
   text.replace(value_begin, end - value_begin, value);
+  return true;
+}
+
+bool RestoreDisplayValues(std::string& current, const std::string& original) {
+  for (const std::string key : {"fullscreen", "borderless", "res_width", "res_height"}) {
+    const auto value = XmlValue(original, key);
+    if (!value || !ReplaceXmlValue(current, key, *value)) return false;
+  }
   return true;
 }
 
@@ -237,23 +327,18 @@ bool PrepareX4Config(const Settings& settings) {
 
   const DWORD original_attributes = GetFileAttributesW(config_path->c_str());
   if (original_attributes == INVALID_FILE_ATTRIBUTES) return false;
-  SetFileAttributesW(config_path->c_str(), original_attributes & ~FILE_ATTRIBUTE_READONLY);
-  bool wrote_config = false;
-  {
-    std::ofstream file(*config_path, std::ios::binary | std::ios::trunc);
-    if (file) {
-      file.write(text.data(), static_cast<std::streamsize>(text.size()));
-      wrote_config = static_cast<bool>(file);
-    }
+  if (!SetFileAttributesW(config_path->c_str(), original_attributes & ~FILE_ATTRIBUTE_READONLY)) {
+    std::wcerr << L"Could not unlock X4 config for writing.\n";
+    return false;
   }
+  const bool wrote_config = WriteTextAtomically(*config_path, text);
   DWORD final_attributes = original_attributes;
   if (settings.lock_config || (original_attributes & FILE_ATTRIBUTE_READONLY) != 0) {
     final_attributes |= FILE_ATTRIBUTE_READONLY;
   } else {
     final_attributes &= ~FILE_ATTRIBUTE_READONLY;
   }
-  SetFileAttributesW(config_path->c_str(), final_attributes);
-  if (!wrote_config) return false;
+  if (!SetFileAttributesW(config_path->c_str(), final_attributes) || !wrote_config) return false;
   std::wcout << L"Prepared X4 config: " << config_path->wstring() << L"\n";
   std::wcout << L"Backup: " << backup.wstring() << L"\n";
   return true;
@@ -264,19 +349,53 @@ bool RestoreX4Config() {
   if (!config_path) return false;
   const fs::path backup = config_path->parent_path() / L"config.x4-triple-screen.backup.xml";
   if (!fs::exists(backup)) return false;
+  std::string current = ReadText(*config_path);
+  const std::string original = ReadText(backup);
+  if (current.empty() || original.empty()) return false;
+  if (!RestoreDisplayValues(current, original)) return false;
+
   const DWORD attributes = GetFileAttributesW(config_path->c_str());
   if (attributes == INVALID_FILE_ATTRIBUTES) return false;
-  SetFileAttributesW(config_path->c_str(), attributes & ~FILE_ATTRIBUTE_READONLY);
-  std::error_code ec;
-  fs::copy_file(backup, *config_path, fs::copy_options::overwrite_existing, ec);
-  SetFileAttributesW(config_path->c_str(), attributes);
-  return !ec;
+  if (!SetFileAttributesW(config_path->c_str(), attributes & ~FILE_ATTRIBUTE_READONLY)) return false;
+  if (!WriteTextAtomically(*config_path, current)) return false;
+  // The restore command is also the recovery path for lock_x4_config=1.
+  return SetFileAttributesW(config_path->c_str(), attributes & ~FILE_ATTRIBUTE_READONLY) != FALSE;
 }
 
 bool ValidDesktopRectangle(const Settings& settings) {
   const long long width = static_cast<long long>(settings.desktop.right) - settings.desktop.left;
   const long long height = static_cast<long long>(settings.desktop.bottom) - settings.desktop.top;
   return width > 0 && height > 0 && width <= 100000 && height <= 100000;
+}
+
+bool RunSelfTests() {
+  std::string xml = "<root><fullscreen>true</fullscreen><borderless>true</borderless>"
+                    "<res_width>1920</res_width><res_height>1080</res_height></root>";
+  bool ok = XmlValue(xml, "res_width") == std::optional<std::string>("1920");
+  ok &= ReplaceXmlValue(xml, "fullscreen", "false");
+  ok &= ReplaceXmlValue(xml, "res_width", "7680");
+  ok &= XmlValue(xml, "fullscreen") == std::optional<std::string>("false");
+  ok &= XmlValue(xml, "res_width") == std::optional<std::string>("7680");
+  ok &= !ReplaceXmlValue(xml, "missing", "1");
+
+  std::string current = "<root><fullscreen>false</fullscreen><borderless>false</borderless>"
+                        "<res_width>7680</res_width><res_height>1440</res_height>"
+                        "<quality>ultra</quality></root>";
+  const std::string original = "<root><fullscreen>true</fullscreen><borderless>true</borderless>"
+                               "<res_width>2560</res_width><res_height>1440</res_height>"
+                               "<quality>medium</quality></root>";
+  ok &= RestoreDisplayValues(current, original);
+  ok &= XmlValue(current, "res_width") == std::optional<std::string>("2560");
+  ok &= XmlValue(current, "quality") == std::optional<std::string>("ultra");
+
+  Settings valid;
+  valid.desktop = {-2560, 0, 5120, 1440};
+  Settings invalid;
+  invalid.desktop = {0, 0, 0, 1440};
+  ok &= ValidDesktopRectangle(valid);
+  ok &= !ValidDesktopRectangle(invalid);
+  std::wcout << (ok ? L"Self-tests passed.\n" : L"Self-tests failed.\n");
+  return ok;
 }
 
 Settings LoadSettings(const fs::path& launcher) {
@@ -364,7 +483,15 @@ int LaunchSuspended(const Settings& settings) {
   constexpr int kReplacementWaitMs = 30000;
   constexpr int kPollMs = 250;
   for (int elapsed = 0; elapsed < kReplacementWaitMs; elapsed += kPollMs) {
-    if (const DWORD replacement = FindProcess(L"X4.exe", process.dwProcessId)) {
+    bool ambiguous = false;
+    const DWORD replacement =
+        FindExpectedProcess(L"X4.exe", settings.x4_exe, process.dwProcessId, &ambiguous);
+    if (ambiguous) {
+      CloseHandle(process.hProcess);
+      std::wcerr << L"More than one matching replacement X4 process was found.\n";
+      return 11;
+    }
+    if (replacement) {
       std::wcout << L"Steam handed X4 to process " << replacement << L"; loading hook there...\n";
       CloseHandle(process.hProcess);
       return AttachToExisting(replacement, settings);
@@ -405,6 +532,9 @@ int wmain(int argc, wchar_t** argv) {
   wchar_t module[MAX_PATH]{};
   GetModuleFileNameW(nullptr, module, MAX_PATH);
   const fs::path launcher = fs::absolute(module);
+  if (argc > 1 && _wcsicmp(argv[1], L"--self-test") == 0) {
+    return RunSelfTests() ? 0 : 12;
+  }
   Settings settings = LoadSettings(launcher);
   PrintSettings(settings);
 
@@ -446,7 +576,12 @@ int wmain(int argc, wchar_t** argv) {
     return 4;
   }
 
-  const DWORD existing = FindProcess(L"X4.exe");
+  bool ambiguous = false;
+  const DWORD existing = FindExpectedProcess(L"X4.exe", settings.x4_exe, 0, &ambiguous);
+  if (ambiguous) {
+    std::wcerr << L"More than one matching X4 process is running. Close X4 and try again.\n";
+    return 11;
+  }
   const int result = existing ? AttachToExisting(existing, settings) : LaunchSuspended(settings);
   if (result != 0) {
     std::wcerr << L"See README.md and X4TripleScreen.log for troubleshooting.\n";
