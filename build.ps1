@@ -34,7 +34,7 @@ if ($LASTEXITCODE -ne 0) { throw "Hook resource build failed." }
 
 & $ZigExecutable c++ -target $Target -std=c++20 $Optimize -municode `
     (Join-Path $ProjectRoot "src\launcher.cpp") $LauncherResource `
-    -lshell32 -lole32 -ladvapi32 -o (Join-Path $Output "X4TripleScreen.exe")
+    -lshell32 -lole32 -ladvapi32 -luser32 -o (Join-Path $Output "X4TripleScreen.exe")
 if ($LASTEXITCODE -ne 0) { throw "Launcher build failed." }
 
 $MinHookSources = @("buffer.c", "hook.c", "trampoline.c", "hde\hde64.c")

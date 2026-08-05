@@ -8,6 +8,8 @@
 
 Hi everyone,
 
+**Update — v0.2.1-beta is now available:** the launcher now prevents the unreliable “start X4 first, attach later” path and displays clear errors when the ZIP was not fully extracted.
+
 I wanted to run X4 across three independent monitors: a native 2560x1440 centre monitor and two 1920x1080 side monitors. NVIDIA Surround was not a good option for this combination because the centre image became soft/blurry, while generic borderless-window tools entered a resize loop: they would set the wide window, then X4 would immediately pull it back to one monitor.
 
 After a lot of testing, we found that X4 accepts the wide resolution in `config.xml` but constrains its real window during startup. I have therefore made **X4 Triple Screen**, a small open-source Windows launcher and X4-specific window hook.
@@ -27,7 +29,12 @@ The tested result is a real **7680x1440 X4 client area** across three monitors, 
 - does not patch `X4.exe`, install a service/driver, or affect saves/gameplay;
 - supports custom coordinates and resolutions through a small INI file.
 
-The default setup is intentionally simple: extract the release ZIP, close X4, and double-click `X4TripleScreen.exe`.
+### How to launch it
+
+1. Download the release ZIP — do not download or extract only the `.exe`.
+2. Use Windows **Extract All** and keep `X4TripleScreen.exe`, `X4TripleScreenHook.dll`, and `x4-triple-screen.ini` together in the same folder.
+3. Close X4 completely. Steam may remain open.
+4. Double-click `X4TripleScreen.exe`. **Do not start X4 first:** the launcher starts the game itself and must load the hook before X4 creates its Vulkan window.
 
 ### Mixed 1440p + 1080p monitor setup
 
@@ -39,7 +46,7 @@ The display side is based on the very useful [mixed-resolution iRacing guide by 
 4. Keep the centre display at native 2560x1440.
 5. In Windows Display Settings, make the centre primary and arrange all three as one aligned horizontal row.
 6. You should now have a 7680x1440 virtual desktop: left at x=-2560, centre at x=0, right at x=2560.
-7. Extract X4 Triple Screen and run the launcher.
+7. Close X4, extract the complete X4 Triple Screen ZIP, and run the launcher. Let the launcher start X4.
 
 CRU is **not normally required**. It can help only if a monitor exposes an unwanted TV/high-resolution mode and NVIDIA calculates DSR from the wrong base resolution. The repository guide explains the safe backup/recovery approach and links only to CRU's official thread.
 

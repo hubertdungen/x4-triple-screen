@@ -14,7 +14,7 @@ Changing `config.xml` to an oversized window is not sufficient. X4 accepts the s
 4. Starts X4 suspended and loads the hook before normal window creation.
 5. Detects Steam's replacement X4 process, verifies its full executable path, and loads the hook there as well.
 
-If X4 is already running, the launcher can attach to that process directly.
+If X4 is already running, the launcher refuses to continue and asks the user to close it. Loading the hook after X4 has created its Vulkan window is not reliable. The internal attach path remains only for Steam's automatic replacement-process hand-off during a launch initiated by the tool.
 
 ## Hook
 

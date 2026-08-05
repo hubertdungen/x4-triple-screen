@@ -433,6 +433,12 @@ void PrintSettings(const Settings& settings) {
              << L"Hook DLL        : " << settings.dll.wstring() << L"\n\n";
 }
 
+int ShowError(const std::wstring& message, int code) {
+  std::wcerr << message << L"\n";
+  MessageBoxW(nullptr, message.c_str(), L"X4 Triple Screen", MB_OK | MB_ICONERROR);
+  return code;
+}
+
 int AttachToExisting(DWORD pid, const Settings& settings) {
   HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION |
                                    PROCESS_VM_WRITE | PROCESS_VM_READ,
@@ -539,8 +545,8 @@ int wmain(int argc, wchar_t** argv) {
   PrintSettings(settings);
 
   if (!ValidDesktopRectangle(settings)) {
-    std::wcerr << L"Invalid window rectangle. Check x, y, width, and height in x4-triple-screen.ini.\n";
-    return 2;
+    return ShowError(
+        L"Invalid window rectangle. Check x, y, width, and height in x4-triple-screen.ini.", 2);
   }
 
   if (argc > 1 && _wcsicmp(argv[1], L"--restore-config") == 0) {
@@ -548,22 +554,24 @@ int wmain(int argc, wchar_t** argv) {
       std::wcout << L"Original X4 config restored from backup.\n";
       return 0;
     }
-    std::wcerr << L"No restorable X4 config backup was found.\n";
-    return 2;
+    return ShowError(L"No restorable X4 config backup was found.", 2);
   }
 
   if (!fs::exists(settings.ini)) {
-    std::wcerr << L"Missing x4-triple-screen.ini next to the launcher.\n";
-    return 2;
+    return ShowError(
+        L"Missing x4-triple-screen.ini next to the launcher.\n\n"
+        L"Download the release ZIP, choose Extract All, and keep the EXE, DLL, and INI together.",
+        2);
   }
   if (!fs::exists(settings.dll)) {
-    std::wcerr << L"Missing X4TripleScreenHook.dll next to the launcher.\n";
-    return 3;
+    return ShowError(
+        L"Missing X4TripleScreenHook.dll next to the launcher.\n\n"
+        L"Download the release ZIP, choose Extract All, and keep the EXE, DLL, and INI together.",
+        3);
   }
   if (settings.x4_exe.empty() || !fs::exists(settings.x4_exe) ||
       _wcsicmp(settings.x4_exe.filename().c_str(), L"X4.exe") != 0) {
-    std::wcerr << L"X4.exe was not found. Set x4_exe in x4-triple-screen.ini.\n";
-    return 4;
+    return ShowError(L"X4.exe was not found. Set x4_exe in x4-triple-screen.ini.", 4);
   }
 
   if (argc > 1 && _wcsicmp(argv[1], L"--dry-run") == 0) {
@@ -571,23 +579,29 @@ int wmain(int argc, wchar_t** argv) {
     return 0;
   }
 
-  if (settings.prepare_config && !PrepareX4Config(settings)) {
-    std::wcerr << L"X4 config preparation failed. No process was injected.\n";
-    return 4;
-  }
-
   bool ambiguous = false;
   const DWORD existing = FindExpectedProcess(L"X4.exe", settings.x4_exe, 0, &ambiguous);
   if (ambiguous) {
-    std::wcerr << L"More than one matching X4 process is running. Close X4 and try again.\n";
-    return 11;
+    return ShowError(L"More than one matching X4 process is running. Close X4 and try again.", 11);
   }
-  const int result = existing ? AttachToExisting(existing, settings) : LaunchSuspended(settings);
+  if (existing) {
+    return ShowError(
+        L"X4 is already running.\n\n"
+        L"Close X4 completely, then run X4TripleScreen.exe. Steam may remain open.\n\n"
+        L"The launcher must start X4 before its Vulkan window is created.",
+        13);
+  }
+
+  if (settings.prepare_config && !PrepareX4Config(settings)) {
+    return ShowError(L"X4 config preparation failed. No process was injected.", 4);
+  }
+
+  const int result = LaunchSuspended(settings);
   if (result != 0) {
-    std::wcerr << L"See README.md and X4TripleScreen.log for troubleshooting.\n";
-    std::wcout << L"Press Enter to close...";
-    std::wstring ignored;
-    std::getline(std::wcin, ignored);
+    return ShowError(
+        L"X4 could not be started with the triple-screen hook.\n\n"
+        L"See the console output, README.md, and X4TripleScreen.log for details.",
+        result);
   } else {
     Sleep(1500);
   }
