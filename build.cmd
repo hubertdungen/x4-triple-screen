@@ -15,7 +15,7 @@ if not exist "%OBJ%" mkdir "%OBJ%"
 "%ZIG%" rc /nologo /fo "%OBJ%\hook.res" "%ROOT%resources\hook.rc" || exit /b 1
 
 "%ZIG%" c++ -target x86_64-windows-gnu -std=c++20 -O2 -municode ^
-  "%ROOT%src\launcher.cpp" "%OBJ%\launcher.res" -lshell32 -lole32 -ladvapi32 ^
+  "%ROOT%src\launcher.cpp" "%OBJ%\launcher.res" -lshell32 -lole32 -ladvapi32 -luser32 ^
   -o "%OUT%\X4TripleScreen.exe" || exit /b 1
 
 "%ZIG%" cc -target x86_64-windows-gnu -O2 -DUNICODE -D_UNICODE -I "%MINHOOK%\include" -I "%MINHOOK%\src" -c "%MINHOOK%\src\buffer.c" -o "%OBJ%\buffer.o" || exit /b 1

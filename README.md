@@ -6,7 +6,15 @@ X4 normally pulls an oversized window back to one monitor. X4 Triple Screen star
 
 ## Download
 
-[Download the newest X4 Triple Screen build](https://github.com/hubertdungen/x4-triple-screen/releases), extract it, close X4, and double-click `X4TripleScreen.exe`. Release notes and SHA-256 checksums are published beside every download.
+[Download the newest X4 Triple Screen release ZIP](https://github.com/hubertdungen/x4-triple-screen/releases). Use Windows **Extract All** and keep these three files together in the same folder:
+
+- `X4TripleScreen.exe`
+- `X4TripleScreenHook.dll`
+- `x4-triple-screen.ini`
+
+Do not download or extract only the `.exe`. Close X4 completely, then double-click `X4TripleScreen.exe`; the launcher starts X4 itself. Steam may remain open.
+
+Release notes and SHA-256 checksums are published beside every download.
 
 No installation, NVIDIA Surround, service, driver, or permanent modification to `X4.exe` is required.
 
@@ -24,9 +32,10 @@ The hook has been confirmed in the running game: X4 continued rendering at 7680x
 
 1. Make every monitor use the same effective vertical resolution.
 2. Arrange the monitors as one rectangle in Windows Display Settings.
-3. Close X4.
-4. Extract the release ZIP to a writable folder.
-5. Double-click `X4TripleScreen.exe`.
+3. Close X4 completely. Steam may remain open.
+4. Download the release ZIP and choose **Extract All** to a writable folder.
+5. Confirm that the EXE, DLL, and INI listed above are together in that folder.
+6. Double-click `X4TripleScreen.exe`. **Do not start X4 first**: the launcher must load the hook before X4 creates its Vulkan window.
 
 The default `auto` configuration detects Steam, X4, and the complete Windows virtual desktop. For the mixed 1440p/1080p setup, see the [step-by-step mixed-resolution guide](docs/SETUP-MIXED-RESOLUTION.md).
 
@@ -84,7 +93,8 @@ Deleting the extracted folder removes the tool itself.
 - If X4 is not detected, set `x4_exe` and `steam_exe` explicitly in the INI.
 - If the wrong area is covered, set explicit `x`, `y`, `width`, and `height`.
 - If side images are vertically offset, align the monitor rectangles in Windows and make their effective heights match.
-- If X4 is already running, the launcher attaches to that X4 process. For the cleanest result, close X4 before launching.
+- If X4 is already running, the launcher stops and tells you to close it. Exit X4 completely, then run `X4TripleScreen.exe`; attaching after the Vulkan window exists is not reliable.
+- If Windows reports a missing DLL or INI, extract the complete release ZIP instead of copying only the launcher EXE.
 
 Normal X4 extensions/mods should not affect the hook because it operates on the native Windows window rather than game assets or scripts. UI mods can, of course, change how usable the already very wide menus and map are.
 

@@ -30,17 +30,17 @@ jobs:
 
       - name: Build and package beta
         shell: pwsh
-        run: .\package.ps1 -Zig $env:ZIG_EXE -Version 0.2.0-beta
+        run: .\package.ps1 -Zig $env:ZIG_EXE -Version 0.2.1-beta
 
       - name: Run release smoke tests
         shell: pwsh
-        run: .\tests\release-smoke.ps1 -ReleaseDirectory .\release -Version 0.2.0-beta -PackageZip .\release\X4TripleScreen-v0.2.0-beta.zip
+        run: .\tests\release-smoke.ps1 -ReleaseDirectory .\release -Version 0.2.1-beta -PackageZip .\release\X4TripleScreen-v0.2.1-beta.zip
 
       - name: Upload release candidate
         uses: actions/upload-artifact@v4
         with:
-          name: X4TripleScreen-v0.2.0-beta
+          name: X4TripleScreen-v0.2.1-beta
           path: |
-            release/X4TripleScreen-v0.2.0-beta.zip
-            release/X4TripleScreen-v0.2.0-beta.zip.sha256
+            release/X4TripleScreen-v0.2.1-beta.zip
+            release/X4TripleScreen-v0.2.1-beta.zip.sha256
           if-no-files-found: error

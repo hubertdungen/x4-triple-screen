@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1-beta - 2026-08-05
+
+- Refuse to attach after X4 has already created its Vulkan window; users are now told to close X4 and let the launcher start it.
+- Show persistent Windows error dialogs instead of allowing startup errors to disappear with the console window.
+- Explain that the complete release ZIP must be extracted and that the EXE, DLL, and INI must remain together.
+- Select release notes from the requested package version instead of a hard-coded filename.
+
 ## 0.2.0-beta - 2026-08-05
 
 - Validate the full executable path before injecting into an existing or Steam replacement `X4.exe` process.
