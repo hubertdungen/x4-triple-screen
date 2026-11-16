@@ -128,3 +128,6 @@ X4 Triple Screen is MIT licensed. [MinHook](https://github.com/TsudaKageyu/minho
 The mixed-resolution setup is inspired by Alechilles' [iRacing guide for different-resolution triple monitors](https://www.reddit.com/r/iRacing/comments/18lgbga/guide_how_to_use_three_monitors_with_different/).
 
 This project is not affiliated with or endorsed by Egosoft, Valve, Microsoft, NVIDIA, or the CRU project.
+
+
+<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>
